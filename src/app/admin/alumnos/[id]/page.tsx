@@ -4,21 +4,29 @@ import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import TopBar from "@/components/TopBar";
+import ExportHoursButton from "@/components/ExportHoursButton";
 
-type Attendance = { id: string; date: string; dayOfWeek: string; hours: number; source: string; note: string | null };
+type Attendance = {
+  id: string;
+  date: string;
+  dayOfWeek: string;
+  hours: number;
+  source: string;
+  note: string | null;
+  cancelled: boolean;
+};
 type StudentInfo = {
   id: string; dni: string; nombre: string; apellido: string; active: boolean;
-  initialHours: number; initialHoursSet: boolean;
 };
 
 export default function AlumnoDetalleAdmin({ params }: { params: { id: string } }) {
   const { data: session } = useSession();
   const [student, setStudent] = useState<StudentInfo | null>(null);
   const [attendances, setAttendances] = useState<Attendance[]>([]);
+  const [totalHours, setTotalHours] = useState(0);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
 
-  const [initialHoursInput, setInitialHoursInput] = useState("0");
   const [newDate, setNewDate] = useState("");
   const [newHours, setNewHours] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -31,26 +39,14 @@ export default function AlumnoDetalleAdmin({ params }: { params: { id: string } 
     ]);
     const found = (usersData.users ?? []).find((u: StudentInfo) => u.id === params.id) ?? null;
     setStudent(found);
-    if (found) setInitialHoursInput(String(found.initialHours));
     setAttendances(attData.attendances ?? []);
+    setTotalHours(attData.totalHours ?? 0);
     setLoading(false);
   }, [params.id]);
 
   useEffect(() => {
     load();
   }, [load]);
-
-  async function saveInitialHours() {
-    setMessage(null);
-    const res = await fetch(`/api/admin/users/${params.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ initialHours: Number(initialHoursInput) }),
-    });
-    const data = await res.json();
-    setMessage(res.ok ? { text: "Horas iniciales actualizadas.", ok: true } : { text: data.error, ok: false });
-    if (res.ok) load();
-  }
 
   async function toggleActive() {
     if (!student) return;
@@ -109,8 +105,6 @@ export default function AlumnoDetalleAdmin({ params }: { params: { id: string } 
 
   if (!session) return null;
 
-  const total = (student?.initialHours ?? 0) + attendances.reduce((s, a) => s + a.hours, 0);
-
   return (
     <div className="min-h-screen bg-slate-50">
       <TopBar nombre={session.user.nombre} apellido={session.user.apellido} roleLabel="Administrador" />
@@ -125,55 +119,45 @@ export default function AlumnoDetalleAdmin({ params }: { params: { id: string } 
           <p className="text-slate-500">Alumno no encontrado.</p>
         ) : (
           <>
-            <section className="card flex items-start justify-between">
-              <div>
-                <h2 className="text-lg font-bold text-primary">{student.apellido}, {student.nombre}</h2>
-                <p className="text-sm text-slate-500">DNI {student.dni}</p>
-                <p className="mt-4 text-4xl font-extrabold text-accent">{total}hs</p>
+            <section className="card">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-bold text-primary">{student.apellido}, {student.nombre}</h2>
+                  <p className="text-sm text-slate-500">DNI {student.dni}</p>
+                  <p className="mt-4 text-4xl font-extrabold text-accent">{totalHours}hs</p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <ExportHoursButton label="Exportar horas (CSV)" studentId={student.id} />
+                  <button onClick={toggleActive} className={student.active ? "btn-danger" : "btn-outline"}>
+                    {student.active ? "Desactivar cuenta" : "Reactivar cuenta"}
+                  </button>
+                </div>
               </div>
-              <button onClick={toggleActive} className={student.active ? "btn-danger" : "btn-outline"}>
-                {student.active ? "Desactivar cuenta" : "Reactivar cuenta"}
-              </button>
             </section>
 
             {message && (
               <p className={`text-sm font-medium ${message.ok ? "text-green-700" : "text-red-600"}`}>{message.text}</p>
             )}
 
-            <section className="card grid gap-6 md:grid-cols-2">
-              <div>
-                <h3 className="mb-2 font-bold text-primary">Horas previas al sistema</h3>
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    min={0}
-                    className="input"
-                    value={initialHoursInput}
-                    onChange={(e) => setInitialHoursInput(e.target.value)}
-                  />
-                  <button className="btn-outline whitespace-nowrap" onClick={saveInitialHours}>Guardar</button>
-                </div>
-              </div>
-              <div>
-                <h3 className="mb-2 font-bold text-primary">Restablecer contraseña</h3>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    className="input"
-                    placeholder="Nueva contraseña"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                  />
-                  <button className="btn-outline whitespace-nowrap" onClick={resetPassword}>Restablecer</button>
-                </div>
+            <section className="card">
+              <h3 className="mb-2 font-bold text-primary">Restablecer contraseña</h3>
+              <div className="flex max-w-md gap-2">
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="Nueva contraseña"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+                <button className="btn-outline whitespace-nowrap" onClick={resetPassword}>Restablecer</button>
               </div>
             </section>
 
             <section className="card">
               <h3 className="mb-2 font-bold text-primary">Cargar / corregir asistencia de una clase pasada</h3>
               <p className="mb-3 text-sm text-slate-500">
-                Solo se pueden cargar fechas de martes, jueves o viernes que ya sucedieron. Si dejás
-                "Horas" vacío, se acredita el total del día (3hs).
+                Solo se pueden cargar fechas de martes, jueves o viernes que ya sucedieron y que no
+                estén anuladas. Si dejás "Horas" vacío, se acredita el total del día (3hs).
               </p>
               <div className="flex flex-wrap items-end gap-3">
                 <div>
@@ -208,11 +192,17 @@ export default function AlumnoDetalleAdmin({ params }: { params: { id: string } 
                   </thead>
                   <tbody>
                     {attendances.map((a) => (
-                      <tr key={a.id}>
+                      <tr key={a.id} className={a.cancelled ? "text-slate-400" : undefined}>
                         <td>{a.date}</td>
                         <td>{a.dayOfWeek}</td>
-                        <td>{a.hours}hs</td>
-                        <td>{a.source === "ADMIN" ? "Corregido por admin" : "Autoregistrado"}</td>
+                        <td>
+                          {a.cancelled ? (
+                            <span className="badge bg-amber-100 text-amber-700">Clase anulada</span>
+                          ) : (
+                            `${a.hours}hs`
+                          )}
+                        </td>
+                        <td>{a.source === "ADMIN" ? "Carga manual" : "Autoregistrado"}</td>
                         <td>
                           <button className="btn-danger" onClick={() => deleteAttendance(a.date)}>Eliminar</button>
                         </td>

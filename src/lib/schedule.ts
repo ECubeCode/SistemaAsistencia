@@ -75,8 +75,25 @@ export function classWindowForDate(date: Date = new Date()) {
   };
 }
 
+/**
+ * Info de la clase que corresponde a una fecha YYYY-MM-DD cualquiera, sea
+ * pasada o futura. Devuelve null si esa fecha no es dia de clase.
+ * Se usa para anular/reactivar clases (que si admite fechas futuras).
+ */
+export function classDayForDateStr(dateStr: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return null;
+  const [y, m, d] = dateStr.split("-").map(Number);
+  // Se parsea como mediodia UTC para que el dia de la semana no se corra por TZ.
+  const asUTCNoon = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+  if (Number.isNaN(asUTCNoon.getTime())) return null;
+  const win = WEEKLY_SCHEDULE[asUTCNoon.getUTCDay()];
+  if (!win) return null;
+  return { ...win, date: dateStr, hours: hoursForWindow(win) };
+}
+
 export type AttendanceStatus =
   | { state: "NO_CLASS_TODAY" }
+  | { state: "CANCELLED"; dayOfWeek: string; start: string; end: string; reason: string | null }
   | { state: "NOT_STARTED"; dayOfWeek: string; start: string; end: string; hours: number }
   | { state: "OPEN"; dayOfWeek: string; start: string; end: string; hours: number; date: string }
   | { state: "CLOSED"; dayOfWeek: string; start: string; end: string; hours: number };

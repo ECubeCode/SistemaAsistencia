@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/apiAuth";
 import { getAttendanceStatus } from "@/lib/schedule";
+import { getCancelledDates, sumCreditedHours } from "@/lib/hours";
 import { logAudit } from "@/lib/audit";
 
 // El alumno registra su propia asistencia del dia. Solo funciona si la
@@ -14,6 +15,15 @@ export async function POST() {
   if (status.state !== "OPEN") {
     return NextResponse.json(
       { error: "El registro de asistencia no esta disponible en este momento." },
+      { status: 400 }
+    );
+  }
+
+  // La clase pudo haber sido anulada (feriado, paro) mientras estaba en curso.
+  const cancelled = await prisma.cancelledClass.findUnique({ where: { date: status.date } });
+  if (cancelled) {
+    return NextResponse.json(
+      { error: "La clase de hoy fue anulada, no corresponde registrar asistencia." },
       { status: 400 }
     );
   }
@@ -61,10 +71,16 @@ export async function GET(req: Request) {
     studentId = queryStudentId;
   }
 
-  const attendances = await prisma.attendance.findMany({
+  const rows = await prisma.attendance.findMany({
     where: { studentId },
     orderBy: { date: "desc" },
   });
 
-  return NextResponse.json({ attendances });
+  // Se marcan las que caen en una clase anulada: siguen listadas pero no
+  // acreditan horas.
+  const cancelledDates = await getCancelledDates();
+  const attendances = rows.map((a) => ({ ...a, cancelled: cancelledDates.has(a.date) }));
+  const totalHours = sumCreditedHours(rows, cancelledDates);
+
+  return NextResponse.json({ attendances, totalHours });
 }

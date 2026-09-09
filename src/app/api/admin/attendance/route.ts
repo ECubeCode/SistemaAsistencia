@@ -28,6 +28,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Alumno no encontrado." }, { status: 404 });
   }
 
+  const cancelled = await prisma.cancelledClass.findUnique({ where: { date } });
+  if (cancelled) {
+    return NextResponse.json(
+      { error: "Esa clase está anulada. Reactivala primero si querés acreditar horas." },
+      { status: 400 }
+    );
+  }
+
   const hours = hoursRaw === undefined || hoursRaw === null || hoursRaw === "" ? validation.maxHours : Number(hoursRaw);
   if (!Number.isInteger(hours) || hours < 0 || hours > validation.maxHours) {
     return NextResponse.json(

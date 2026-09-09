@@ -18,16 +18,38 @@ auditoría de todas las acciones relevantes del sistema.
   ya comenzó, y se deshabilita cuando termina el horario de ese día.
 - Un alumno no puede registrar asistencia de una clase que todavía no sucedió,
   ni ver habilitado el botón fuera del horario de clase.
-- En el primer inicio de sesión, cada alumno puede cargar una única vez la
-  cantidad de horas que ya tenía acumuladas antes de que existiera el sistema.
+- Solo se cuentan las horas registradas en el sistema.
 - Alumnos y profesores pueden cambiar su propia contraseña una única vez.
+
+## Clases anuladas
+
+Cuando una clase no se dicta (feriado, paro, suspensión), el profesor la anula
+desde la pestaña **Anular clases**. Se pueden anular clases pasadas y futuras.
+
+Las asistencias ya registradas en una fecha anulada **dejan de acreditar horas
+pero no se borran**: quedan listadas como "Clase anulada" y, si la clase se
+reactiva, vuelven a contar. Mientras una clase está anulada tampoco se puede
+registrar ni cargar asistencia en esa fecha.
+
+## Exportación de horas (CSV)
+
+- **Alumno**: exporta su propio reporte, con dos columnas — `Fecha y hora`
+  (fecha de la clase y su horario de inicio) y `Horas`.
+- **Profesor**: exporta el reporte de un alumno concreto con esas mismas dos
+  columnas, o el consolidado de todos los alumnos, que agrega `Alumno` y `DNI`
+  al principio para poder distinguir a quién corresponde cada fila.
+
+Las asistencias de clases anuladas no se exportan, porque no acreditan horas.
+Los archivos usan punto y coma como separador y BOM UTF-8, que es lo que Excel
+en español interpreta bien por defecto (Google Sheets abre ambos formatos).
 
 ## Roles
 
 - **Alumno**: inicia sesión con DNI + contraseña, registra su propia
-  asistencia y ve su historial y total de horas.
-- **Profesor**: ve información de solo lectura de todos los alumnos (listado,
-  totales de horas, historial de asistencias). No puede modificar nada.
+  asistencia, ve su historial y total de horas, y exporta su reporte en CSV.
+- **Profesor**: ve el listado de todos los alumnos con sus totales de horas e
+  historial de asistencias, puede anular y reactivar clases, y puede exportar
+  los reportes de horas. No puede modificar asistencias individuales.
 
 ## Stack técnico
 

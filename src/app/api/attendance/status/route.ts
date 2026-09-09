@@ -1,13 +1,29 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/apiAuth";
-import { getAttendanceStatus } from "@/lib/schedule";
+import { getAttendanceStatus, nowInSchoolTZ, type AttendanceStatus } from "@/lib/schedule";
 
 export async function GET() {
   const { session, error } = await requireSession(["ALUMNO"]);
   if (error) return error;
 
-  const status = getAttendanceStatus();
+  let status: AttendanceStatus = getAttendanceStatus();
+
+  // Si la clase de hoy fue anulada, se informa como tal y no se habilita
+  // el registro, sin importar el horario.
+  if (status.state !== "NO_CLASS_TODAY") {
+    const { dateStr } = nowInSchoolTZ();
+    const cancelled = await prisma.cancelledClass.findUnique({ where: { date: dateStr } });
+    if (cancelled) {
+      status = {
+        state: "CANCELLED",
+        dayOfWeek: status.dayOfWeek,
+        start: status.start,
+        end: status.end,
+        reason: cancelled.reason,
+      };
+    }
+  }
 
   let alreadyRegistered = false;
   if (status.state === "OPEN") {

@@ -9,8 +9,6 @@ export type StudentRow = {
   apellido: string;
   role: string;
   active: boolean;
-  initialHours: number;
-  initialHoursSet: boolean;
   totalHours: number;
   totalAttendances: number;
 };
@@ -33,7 +31,6 @@ export default function StudentsTable({
             <th>DNI</th>
             <th>Estado</th>
             <th>Asistencias</th>
-            <th>Horas previas</th>
             <th>Horas totales</th>
             <th></th>
           </tr>
@@ -49,7 +46,6 @@ export default function StudentsTable({
                 </span>
               </td>
               <td>{s.totalAttendances}</td>
-              <td>{s.initialHoursSet ? `${s.initialHours}hs` : <span className="text-amber-600">Sin cargar</span>}</td>
               <td className="font-semibold text-accent-dark">{s.totalHours}hs</td>
               <td>
                 <Link href={`${detailBasePath}/${s.id}`} className="text-sm font-semibold text-primary hover:underline">
@@ -60,7 +56,7 @@ export default function StudentsTable({
           ))}
           {alumnos.length === 0 && (
             <tr>
-              <td colSpan={7} className="text-center text-slate-500">
+              <td colSpan={6} className="text-center text-slate-500">
                 No hay alumnos cargados todavía.
               </td>
             </tr>

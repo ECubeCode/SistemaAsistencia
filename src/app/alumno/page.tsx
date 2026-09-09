@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import TopBar from "@/components/TopBar";
+import ExportHoursButton from "@/components/ExportHoursButton";
 import type { AttendanceStatus } from "@/lib/schedule";
 
 type Attendance = {
@@ -11,42 +12,34 @@ type Attendance = {
   dayOfWeek: string;
   hours: number;
   source: string;
+  cancelled: boolean;
 };
 
 export default function AlumnoPage() {
-  const { data: session, update } = useSession();
+  const { data: session } = useSession();
   const [status, setStatus] = useState<AttendanceStatus | null>(null);
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
   const [attendances, setAttendances] = useState<Attendance[]>([]);
-  const [initialHours, setInitialHours] = useState<number>(0);
+  const [totalHours, setTotalHours] = useState(0);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [showInitialHoursForm, setShowInitialHoursForm] = useState(false);
-  const [initialHoursInput, setInitialHoursInput] = useState("0");
 
   const load = useCallback(async () => {
-    const [statusRes, attRes, meRes] = await Promise.all([
+    const [statusRes, attRes] = await Promise.all([
       fetch("/api/attendance/status").then((r) => r.json()),
       fetch("/api/attendance").then((r) => r.json()),
-      fetch("/api/me").then((r) => r.json()),
     ]);
     setStatus(statusRes.status);
     setAlreadyRegistered(statusRes.alreadyRegistered);
     setAttendances(attRes.attendances ?? []);
-    setInitialHours(meRes.user?.initialHours ?? 0);
+    setTotalHours(attRes.totalHours ?? 0);
     setLoading(false);
   }, []);
 
   useEffect(() => {
     load();
   }, [load]);
-
-  useEffect(() => {
-    if (session && session.user.initialHoursSet === false) {
-      setShowInitialHoursForm(true);
-    }
-  }, [session]);
 
   async function handleRegister() {
     setRegistering(true);
@@ -62,57 +55,13 @@ export default function AlumnoPage() {
     await load();
   }
 
-  async function handleInitialHoursSubmit() {
-    const hours = Number(initialHoursInput);
-    const res = await fetch("/api/initial-hours", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hours }),
-    });
-    if (!res.ok) {
-      const data = await res.json();
-      setMessage(data.error ?? "No se pudo guardar.");
-      return;
-    }
-    setShowInitialHoursForm(false);
-    await update();
-    await load();
-  }
-
-  const totalFromAttendances = attendances.reduce((sum, a) => sum + a.hours, 0);
-  const total = initialHours + totalFromAttendances;
-
   if (!session) return null;
+
+  const creditedCount = attendances.filter((a) => !a.cancelled).length;
 
   return (
     <div className="min-h-screen bg-slate-50">
       <TopBar nombre={session.user.nombre} apellido={session.user.apellido} roleLabel="Alumno" />
-
-      {showInitialHoursForm && (
-        <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="mb-2 text-lg font-bold text-primary">Carga de horas previas</h2>
-            <p className="mb-4 text-sm text-slate-600">
-              Antes de que existiera este sistema, es posible que ya hayas cumplido horas de
-              Prácticas Profesionalizantes. Indicá cuántas horas ya tenías acumuladas (si no
-              tenías ninguna, dejá 0). Esto se carga una única vez y después no vas a poder
-              modificarlo por tu cuenta, así que revisá bien el número antes de guardar.
-            </p>
-            <label className="label" htmlFor="initialHours">Horas previas acumuladas</label>
-            <input
-              id="initialHours"
-              type="number"
-              min={0}
-              className="input mb-4"
-              value={initialHoursInput}
-              onChange={(e) => setInitialHoursInput(e.target.value)}
-            />
-            <button className="btn-primary w-full" onClick={handleInitialHoursSubmit}>
-              Guardar y continuar
-            </button>
-          </div>
-        </div>
-      )}
 
       <main className="mx-auto max-w-3xl space-y-6 px-4 py-8">
         <section className="card">
@@ -131,12 +80,16 @@ export default function AlumnoPage() {
         </section>
 
         <section className="card">
-          <h2 className="mb-1 text-lg font-bold text-primary">Total de horas acumuladas</h2>
-          <p className="text-4xl font-extrabold text-accent">{total}hs</p>
-          <p className="mt-1 text-sm text-slate-500">
-            {initialHours > 0 && `${initialHours}hs previas + `}
-            {totalFromAttendances}hs registradas en el sistema ({attendances.length} asistencias)
-          </p>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h2 className="mb-1 text-lg font-bold text-primary">Total de horas acumuladas</h2>
+              <p className="text-4xl font-extrabold text-accent">{totalHours}hs</p>
+              <p className="mt-1 text-sm text-slate-500">
+                {creditedCount} {creditedCount === 1 ? "asistencia acreditada" : "asistencias acreditadas"}
+              </p>
+            </div>
+            <ExportHoursButton label="Exportar mis horas (CSV)" />
+          </div>
         </section>
 
         <section className="card">
@@ -156,10 +109,16 @@ export default function AlumnoPage() {
                 </thead>
                 <tbody>
                   {attendances.map((a) => (
-                    <tr key={a.id}>
+                    <tr key={a.id} className={a.cancelled ? "text-slate-400" : undefined}>
                       <td>{a.date}</td>
                       <td>{a.dayOfWeek}</td>
-                      <td>{a.hours}hs</td>
+                      <td>
+                        {a.cancelled ? (
+                          <span className="badge bg-amber-100 text-amber-700">Clase anulada</span>
+                        ) : (
+                          `${a.hours}hs`
+                        )}
+                      </td>
                       <td>{a.source === "ADMIN" ? "Carga manual" : "Autoregistrado"}</td>
                     </tr>
                   ))}
@@ -186,6 +145,15 @@ function AttendanceCard({
 }) {
   if (status.state === "NO_CLASS_TODAY") {
     return <p className="text-slate-600">Hoy no hay clase de Prácticas Profesionalizantes.</p>;
+  }
+
+  if (status.state === "CANCELLED") {
+    return (
+      <p className="text-amber-700">
+        La clase de hoy ({status.dayOfWeek}, {status.start} a {status.end}) fue anulada
+        {status.reason ? `: ${status.reason}` : ""}. No corresponde registrar asistencia.
+      </p>
+    );
   }
 
   if (status.state === "NOT_STARTED") {

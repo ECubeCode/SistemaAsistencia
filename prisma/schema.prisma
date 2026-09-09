@@ -17,10 +17,6 @@ model User {
   passwordHash        String
   role                String   @default("ALUMNO")
 
-  // Carga de horas previas al sistema (solo aplica a ALUMNO, se pide en el primer login)
-  initialHours        Int      @default(0)
-  initialHoursSet     Boolean  @default(false)
-
   // Alumnos y profesores pueden cambiar su propia contraseña una unica vez.
   // El admin no tiene esta opcion (ni para si mismo ni para restablecer la
   // de un profesor: eso queda fuera del alcance de la aplicacion).
@@ -34,6 +30,25 @@ model User {
   attendances         Attendance[]
   logsAsActor         AuditLog[] @relation("ActorLogs")
   logsAsTarget        AuditLog[] @relation("TargetLogs")
+  cancelledClasses    CancelledClass[]
+}
+
+// Clases anuladas (feriados, paros, suspensiones). Las asistencias que caigan
+// en una fecha anulada no acreditan horas, pero no se borran: si la clase se
+// reactiva, vuelven a contar. Se pueden anular clases pasadas y futuras.
+model CancelledClass {
+  id            String   @id @default(cuid())
+  // Fecha de la clase anulada en formato YYYY-MM-DD
+  date          String   @unique
+  dayOfWeek     String
+  reason        String?
+
+  cancelledBy   User?    @relation(fields: [cancelledById], references: [id], onDelete: SetNull)
+  cancelledById String?
+
+  createdAt     DateTime @default(now())
+
+  @@index([date])
 }
 
 model Attendance {

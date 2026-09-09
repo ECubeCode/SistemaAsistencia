@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/apiAuth";
 import { logAudit } from "@/lib/audit";
 import { Role } from "@/lib/roles";
+import { getCancelledDates, sumCreditedHours } from "@/lib/hours";
 
 export async function GET() {
   const { session, error } = await requireSession(["ADMIN", "PROFESOR"]);
@@ -23,17 +24,18 @@ export async function GET() {
       apellido: true,
       role: true,
       active: true,
-      initialHours: true,
-      initialHoursSet: true,
       createdAt: true,
-      attendances: { select: { hours: true } },
+      attendances: { select: { date: true, hours: true } },
     },
   });
 
+  const cancelledDates = await getCancelledDates();
+
   const withTotals = users.map((u) => ({
     ...u,
-    totalHours: u.initialHours + u.attendances.reduce((sum, a) => sum + a.hours, 0),
-    totalAttendances: u.attendances.length,
+    totalHours: sumCreditedHours(u.attendances, cancelledDates),
+    // Solo se cuentan las asistencias que efectivamente acreditan horas.
+    totalAttendances: u.attendances.filter((a) => !cancelledDates.has(a.date)).length,
     attendances: undefined,
   }));
 
