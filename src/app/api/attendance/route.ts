@@ -1,0 +1,70 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireSession } from "@/lib/apiAuth";
+import { getAttendanceStatus } from "@/lib/schedule";
+import { logAudit } from "@/lib/audit";
+
+// El alumno registra su propia asistencia del dia. Solo funciona si la
+// ventana de la clase de hoy esta abierta (ya comenzo y no termino).
+export async function POST() {
+  const { session, error } = await requireSession(["ALUMNO"]);
+  if (error) return error;
+
+  const status = getAttendanceStatus();
+  if (status.state !== "OPEN") {
+    return NextResponse.json(
+      { error: "El registro de asistencia no esta disponible en este momento." },
+      { status: 400 }
+    );
+  }
+
+  const existing = await prisma.attendance.findUnique({
+    where: { studentId_date: { studentId: session!.user.id, date: status.date } },
+  });
+  if (existing) {
+    return NextResponse.json({ error: "Ya registraste tu asistencia de hoy." }, { status: 409 });
+  }
+
+  const attendance = await prisma.attendance.create({
+    data: {
+      studentId: session!.user.id,
+      date: status.date,
+      dayOfWeek: status.dayOfWeek,
+      hours: status.hours,
+      source: "ALUMNO",
+    },
+  });
+
+  await logAudit({
+    actorId: session!.user.id,
+    action: "ATTENDANCE_SELF_CREATE",
+    targetId: session!.user.id,
+    details: `${status.dayOfWeek} ${status.date} (+${status.hours}hs)`,
+  });
+
+  return NextResponse.json({ attendance });
+}
+
+// Historial de asistencias propias (alumno) o de cualquier alumno (profesor/admin via query studentId).
+export async function GET(req: Request) {
+  const { session, error } = await requireSession();
+  if (error) return error;
+
+  const { searchParams } = new URL(req.url);
+  const queryStudentId = searchParams.get("studentId");
+
+  let studentId = session!.user.id;
+  if (queryStudentId && queryStudentId !== session!.user.id) {
+    if (session!.user.role === "ALUMNO") {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    }
+    studentId = queryStudentId;
+  }
+
+  const attendances = await prisma.attendance.findMany({
+    where: { studentId },
+    orderBy: { date: "desc" },
+  });
+
+  return NextResponse.json({ attendances });
+}

@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// SQLite no soporta enums nativos: el rol se valida a nivel de aplicacion
+// (ver src/lib/roles.ts). Valores validos: "ALUMNO" | "PROFESOR" | "ADMIN".
+model User {
+  id                  String   @id @default(cuid())
+  dni                 String   @unique
+  nombre              String
+  apellido            String
+  passwordHash        String
+  role                String   @default("ALUMNO")
+
+  // Carga de horas previas al sistema (solo aplica a ALUMNO, se pide en el primer login)
+  initialHours        Int      @default(0)
+  initialHoursSet     Boolean  @default(false)
+
+  active              Boolean  @default(true)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  attendances         Attendance[]
+  logsAsActor         AuditLog[] @relation("ActorLogs")
+  logsAsTarget        AuditLog[] @relation("TargetLogs")
+}
+
+model Attendance {
+  id         String   @id @default(cuid())
+  student    User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId  String
+
+  // Fecha de la clase en formato YYYY-MM-DD (huso horario America/Argentina/Buenos_Aires)
+  date       String
+  // Nombre del dia de clase: "Martes" | "Jueves" | "Viernes"
+  dayOfWeek  String
+  // Horas acreditadas por esa asistencia (cantidad de modulos de 30min)
+  hours      Int
+
+  // Quien genero el registro originalmente
+  source     String   // "ALUMNO" | "ADMIN"
+  note       String?
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([studentId, date])
+  @@index([studentId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actor      User?    @relation("ActorLogs", fields: [actorId], references: [id], onDelete: SetNull)
+  actorId    String?
+  action     String
+  target     User?    @relation("TargetLogs", fields: [targetId], references: [id], onDelete: SetNull)
+  targetId   String?
+  details    String?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([targetId])
+  @@index([createdAt])
+}
