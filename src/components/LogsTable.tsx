@@ -14,6 +14,7 @@ type LogRow = {
 const ACTION_LABELS: Record<string, string> = {
   LOGIN: "Inicio de sesión",
   LOGIN_FAILED: "Intento de login fallido",
+  LOGIN_BLOCKED: "Login bloqueado por intentos fallidos",
   ATTENDANCE_SELF_CREATE: "Asistencia autoregistrada",
   ATTENDANCE_ADMIN_CREATE: "Asistencia creada por admin",
   ATTENDANCE_ADMIN_UPDATE: "Asistencia modificada por admin",

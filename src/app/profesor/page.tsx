@@ -5,9 +5,10 @@ import { useSession } from "next-auth/react";
 import TopBar from "@/components/TopBar";
 import StudentsTable, { StudentRow } from "@/components/StudentsTable";
 import CancelledClasses from "@/components/CancelledClasses";
+import ClassRoster from "@/components/ClassRoster";
 import ExportHoursButton from "@/components/ExportHoursButton";
 
-type Tab = "alumnos" | "clases";
+type Tab = "alumnos" | "porClase" | "clases";
 
 export default function ProfesorPage() {
   const { data: session } = useSession();
@@ -36,9 +37,10 @@ export default function ProfesorPage() {
         roleLabel={session.user.role === "ADMIN" ? "Administrador" : "Profesor"}
       />
       <main className="mx-auto max-w-5xl space-y-6 px-4 py-8">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {([
             ["alumnos", "Alumnos"],
+            ["porClase", "Por clase"],
             ["clases", "Anular clases"],
           ] as [Tab, string][]).map(([key, label]) => (
             <button
@@ -64,6 +66,13 @@ export default function ProfesorPage() {
             ) : (
               <StudentsTable students={students} detailBasePath="/profesor/alumnos" />
             )}
+          </section>
+        )}
+
+        {tab === "porClase" && (
+          <section className="card">
+            <h2 className="mb-4 text-lg font-bold text-primary">Asistencia por clase</h2>
+            <ClassRoster />
           </section>
         )}
 

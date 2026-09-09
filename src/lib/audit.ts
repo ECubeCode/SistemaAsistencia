@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 export type AuditAction =
   | "LOGIN"
   | "LOGIN_FAILED"
+  | "LOGIN_BLOCKED"
   | "ATTENDANCE_SELF_CREATE"
   | "ATTENDANCE_ADMIN_CREATE"
   | "ATTENDANCE_ADMIN_UPDATE"

@@ -4,6 +4,12 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { logAudit } from "@/lib/audit";
 import { Role } from "@/lib/roles";
+import {
+  RATE_LIMIT_CONFIG,
+  minutesLocked,
+  registerFailure,
+  registerSuccess,
+} from "@/lib/loginRateLimit";
 
 export const authOptions: AuthOptions = {
   session: { strategy: "jwt" },
@@ -22,18 +28,42 @@ export const authOptions: AuthOptions = {
         const password = credentials?.password ?? "";
         if (!dni || !password) return null;
 
+        // Si el DNI está bloqueado por intentos fallidos, no se evalúa la
+        // contraseña. El mensaje se lanza como Error para que la pantalla de
+        // login pueda explicar por qué no entra.
+        const locked = minutesLocked(dni);
+        if (locked > 0) {
+          throw new Error(
+            `Demasiados intentos fallidos. Volvé a probar en ${locked} ${locked === 1 ? "minuto" : "minutos"}.`
+          );
+        }
+
         const user = await prisma.user.findUnique({ where: { dni } });
         if (!user || !user.active) {
+          registerFailure(dni);
           await logAudit({ action: "LOGIN_FAILED", details: `DNI ${dni}` });
           return null;
         }
 
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) {
-          await logAudit({ actorId: user.id, action: "LOGIN_FAILED" });
+          const blocked = registerFailure(dni);
+          await logAudit({
+            actorId: user.id,
+            action: blocked ? "LOGIN_BLOCKED" : "LOGIN_FAILED",
+            details: blocked
+              ? `Bloqueado ${RATE_LIMIT_CONFIG.LOCK_MINUTES} minutos tras ${RATE_LIMIT_CONFIG.MAX_ATTEMPTS} intentos fallidos`
+              : null,
+          });
+          if (blocked) {
+            throw new Error(
+              `Demasiados intentos fallidos. Volvé a probar en ${RATE_LIMIT_CONFIG.LOCK_MINUTES} minutos.`
+            );
+          }
           return null;
         }
 
+        registerSuccess(dni);
         await logAudit({ actorId: user.id, action: "LOGIN" });
 
         return {

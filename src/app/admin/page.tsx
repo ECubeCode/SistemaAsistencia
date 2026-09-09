@@ -7,9 +7,10 @@ import StudentsTable, { StudentRow } from "@/components/StudentsTable";
 import NewUserForm from "@/components/NewUserForm";
 import LogsTable from "@/components/LogsTable";
 import CancelledClasses from "@/components/CancelledClasses";
+import ClassRoster from "@/components/ClassRoster";
 import ExportHoursButton from "@/components/ExportHoursButton";
 
-type Tab = "alumnos" | "clases" | "nuevo" | "logs";
+type Tab = "alumnos" | "porClase" | "clases" | "nuevo" | "logs";
 
 export default function AdminPage() {
   const { data: session } = useSession();
@@ -37,6 +38,7 @@ export default function AdminPage() {
         <div className="flex flex-wrap gap-2">
           {([
             ["alumnos", "Alumnos"],
+            ["porClase", "Por clase"],
             ["clases", "Anular clases"],
             ["nuevo", "Nuevo usuario"],
             ["logs", "Logs del sistema"],
@@ -64,6 +66,13 @@ export default function AdminPage() {
             ) : (
               <StudentsTable students={students} detailBasePath="/admin/alumnos" />
             )}
+          </section>
+        )}
+
+        {tab === "porClase" && (
+          <section className="card">
+            <h2 className="mb-4 text-lg font-bold text-primary">Asistencia por clase</h2>
+            <ClassRoster />
           </section>
         )}
 

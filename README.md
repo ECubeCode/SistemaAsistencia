@@ -19,7 +19,8 @@ auditoría de todas las acciones relevantes del sistema.
 - Un alumno no puede registrar asistencia de una clase que todavía no sucedió,
   ni ver habilitado el botón fuera del horario de clase.
 - Solo se cuentan las horas registradas en el sistema.
-- Alumnos y profesores pueden cambiar su propia contraseña una única vez.
+- Cada 27hs acumuladas (9 clases) el alumno alcanza un hito y la app lo festeja
+  con una animación de papelitos. No se muestra la meta total de la materia.
 
 ## Clases anuladas
 
@@ -43,14 +44,31 @@ Las asistencias de clases anuladas no se exportan, porque no acreditan horas.
 Los archivos usan punto y coma como separador y BOM UTF-8, que es lo que Excel
 en español interpreta bien por defecto (Google Sheets abre ambos formatos).
 
+## Contraseñas
+
+Las cuentas se crean con el DNI como contraseña inicial. En el primer ingreso,
+alumnos y profesores tienen que definir su propia contraseña: hasta que lo
+hagan, un cartel bloquea la app. Ese cambio se puede hacer **una sola vez**,
+así nadie queda con el DNI como clave y después nadie conoce la de los demás.
+
+Si hace falta rehabilitar el cambio (por ejemplo, si alguien tocó la clave de
+otro), la administración restablece la contraseña de ese alumno y el cartel le
+vuelve a aparecer en el siguiente ingreso.
+
+Tras 5 intentos fallidos seguidos, un DNI queda bloqueado 10 minutos. El
+bloqueo se guarda en memoria del proceso, así que un reinicio del contenedor
+lo limpia; si algún día la app corre en más de una instancia, esto hay que
+mover a la base de datos.
+
 ## Roles
 
 - **Alumno**: inicia sesión con DNI + contraseña, registra su propia
   asistencia, ve su calendario semanal (qué clases se vienen y cuáles están
   anuladas), su historial y total de horas, y exporta su reporte en CSV.
 - **Profesor**: ve el listado de todos los alumnos con sus totales de horas e
-  historial de asistencias, puede anular y reactivar clases, y puede exportar
-  los reportes de horas. No puede modificar asistencias individuales.
+  historial de asistencias, consulta la asistencia de una clase puntual (quién
+  vino y quién no, con filtros), puede anular y reactivar clases, y puede
+  exportar los reportes de horas. No puede modificar asistencias individuales.
 
 ## Vista móvil
 

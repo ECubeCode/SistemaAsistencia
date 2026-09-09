@@ -5,6 +5,8 @@ import { useSession } from "next-auth/react";
 import TopBar from "@/components/TopBar";
 import ExportHoursButton from "@/components/ExportHoursButton";
 import WeekCalendar from "@/components/WeekCalendar";
+import Celebration from "@/components/Celebration";
+import { crossedMilestone, hoursToNextMilestone, milestonesReached } from "@/lib/milestones";
 import type { AttendanceStatus } from "@/lib/schedule";
 
 type Attendance = {
@@ -25,6 +27,7 @@ export default function AlumnoPage() {
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [celebrating, setCelebrating] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     const [statusRes, attRes] = await Promise.all([
@@ -36,6 +39,7 @@ export default function AlumnoPage() {
     setAttendances(attRes.attendances ?? []);
     setTotalHours(attRes.totalHours ?? 0);
     setLoading(false);
+    return (attRes.totalHours ?? 0) as number;
   }, []);
 
   useEffect(() => {
@@ -45,6 +49,7 @@ export default function AlumnoPage() {
   async function handleRegister() {
     setRegistering(true);
     setMessage(null);
+    const previousHours = totalHours;
     const res = await fetch("/api/attendance", { method: "POST" });
     const data = await res.json();
     setRegistering(false);
@@ -53,7 +58,12 @@ export default function AlumnoPage() {
       return;
     }
     setMessage("¡Asistencia registrada correctamente!");
-    await load();
+    const newHours = await load();
+    // El festejo se dispara solo en el momento de cruzar el hito, no cada
+    // vez que se abre la página.
+    if (crossedMilestone(previousHours, newHours)) {
+      setCelebrating(newHours);
+    }
   }
 
   if (!session) return null;
@@ -63,6 +73,14 @@ export default function AlumnoPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <TopBar nombre={session.user.nombre} apellido={session.user.apellido} roleLabel="Alumno" />
+
+      {celebrating !== null && (
+        <Celebration
+          hours={celebrating}
+          milestone={milestonesReached(celebrating)}
+          onDone={() => setCelebrating(null)}
+        />
+      )}
 
       <main className="mx-auto max-w-3xl space-y-6 px-4 py-8">
         <section className="card">
@@ -87,6 +105,19 @@ export default function AlumnoPage() {
               <p className="text-4xl font-extrabold text-accent">{totalHours}hs</p>
               <p className="mt-1 text-sm text-slate-500">
                 {creditedCount} {creditedCount === 1 ? "asistencia acreditada" : "asistencias acreditadas"}
+              </p>
+              {/* Solo se habla de festejos: no se muestra la meta total. */}
+              <p className="mt-3 text-sm font-medium text-primary">
+                {milestonesReached(totalHours) > 0 && (
+                  <span className="mr-2" aria-hidden="true">
+                    {"🎉".repeat(Math.min(milestonesReached(totalHours), 8))}
+                  </span>
+                )}
+                {milestonesReached(totalHours) === 0
+                  ? `Te faltan ${hoursToNextMilestone(totalHours)}hs para tu primer festejo`
+                  : `${milestonesReached(totalHours)} ${
+                      milestonesReached(totalHours) === 1 ? "festejo" : "festejos"
+                    } · próximo en ${hoursToNextMilestone(totalHours)}hs`}
               </p>
             </div>
             <ExportHoursButton label="Exportar mis horas (CSV)" />

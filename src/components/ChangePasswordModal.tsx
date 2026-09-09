@@ -3,7 +3,14 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 
-export default function ChangePasswordModal({ onClose }: { onClose: () => void }) {
+export default function ChangePasswordModal({
+  onClose,
+  required = false,
+}: {
+  onClose: () => void;
+  /** Primer ingreso: el cartel no se puede cerrar hasta definir la clave. */
+  required?: boolean;
+}) {
   const { update } = useSession();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -46,11 +53,15 @@ export default function ChangePasswordModal({ onClose }: { onClose: () => void }
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 px-4">
       <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-primary">Cambiar contraseña</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600" aria-label="Cerrar">
-            ✕
-          </button>
+        <div className="mb-4 flex items-center justify-between gap-2">
+          <h2 className="text-lg font-bold text-primary">
+            {required ? "Definí tu contraseña" : "Cambiar contraseña"}
+          </h2>
+          {!required && (
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-600" aria-label="Cerrar">
+              ✕
+            </button>
+          )}
         </div>
 
         {done ? (
@@ -61,16 +72,18 @@ export default function ChangePasswordModal({ onClose }: { onClose: () => void }
               modificarla de nuevo, vas a tener que solicitarlo en la escuela.
             </p>
             <button onClick={onClose} className="btn-primary w-full">
-              Cerrar
+              {required ? "Continuar" : "Cerrar"}
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <p className="text-sm text-slate-500">
-              Solo vas a poder cambiar tu contraseña una única vez, así que elegí bien la nueva.
+              {required
+                ? "Estás entrando con tu DNI como contraseña. Definí una contraseña propia para que nadie más pueda entrar con tu cuenta. Solo se puede hacer una vez, así que elegí bien."
+                : "Solo vas a poder cambiar tu contraseña una única vez, así que elegí bien la nueva."}
             </p>
             <div>
-              <label className="label">Contraseña actual</label>
+              <label className="label">{required ? "Contraseña actual (tu DNI)" : "Contraseña actual"}</label>
               <input
                 type="password"
                 className="input"

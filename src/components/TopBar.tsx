@@ -15,12 +15,16 @@ export default function TopBar({
   roleLabel: string;
 }) {
   const { data: session } = useSession();
-  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
-  // El admin no tiene cambio de contraseña propio. Alumnos y profesores
-  // solo pueden usarlo una única vez.
-  const canChangePassword =
-    session?.user.role !== "ADMIN" && session?.user.selfPasswordChangeUsed === false;
+  // Alumnos y profesores entran la primera vez con su DNI como contraseña:
+  // hasta que definan una propia, la app queda bloqueada por el cartel. Es
+  // el mismo cambio de una sola vez, pero obligatorio en lugar de opcional.
+  // El admin no tiene esta opción (ni obligatoria ni voluntaria).
+  const mustSetPassword =
+    session?.user.role !== "ADMIN" &&
+    session?.user.selfPasswordChangeUsed === false &&
+    !dismissed;
 
   return (
     <header className="sticky top-0 z-10 border-b border-primary-dark bg-primary text-white shadow">
@@ -54,16 +58,6 @@ export default function TopBar({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          {canChangePassword && (
-            <button
-              onClick={() => setShowChangePassword(true)}
-              className="rounded-lg border border-white/40 px-3 py-1.5 text-sm font-medium transition hover:bg-white/10"
-              title="Cambiar contraseña"
-            >
-              <span className="sm:hidden">🔑</span>
-              <span className="hidden sm:inline">Cambiar contraseña</span>
-            </button>
-          )}
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="rounded-lg border border-white/40 px-3 py-1.5 text-sm font-medium transition hover:bg-white/10"
@@ -73,7 +67,7 @@ export default function TopBar({
         </div>
       </div>
 
-      {showChangePassword && <ChangePasswordModal onClose={() => setShowChangePassword(false)} />}
+      {mustSetPassword && <ChangePasswordModal required onClose={() => setDismissed(true)} />}
     </header>
   );
 }

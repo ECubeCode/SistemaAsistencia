@@ -26,7 +26,11 @@ export default function LoginPage() {
     setLoading(false);
 
     if (!res || res.error) {
-      setError("DNI o contraseña incorrectos.");
+      // Cuando el DNI queda bloqueado por intentos fallidos, authorize()
+      // lanza un Error y NextAuth devuelve su mensaje acá. El resto de los
+      // fallos llegan como el código genérico "CredentialsSignin".
+      const isGeneric = !res?.error || res.error === "CredentialsSignin";
+      setError(isGeneric ? "DNI o contraseña incorrectos." : res.error);
       return;
     }
 

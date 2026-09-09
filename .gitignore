@@ -10,3 +10,6 @@ npm-debug.log*
 .DS_Store
 .private-seed.js
 *.tsbuildinfo
+
+# Exportaciones de horas: contienen datos personales de alumnos
+horas-*.csv
