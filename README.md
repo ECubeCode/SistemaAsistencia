@@ -46,10 +46,18 @@ en español interpreta bien por defecto (Google Sheets abre ambos formatos).
 ## Roles
 
 - **Alumno**: inicia sesión con DNI + contraseña, registra su propia
-  asistencia, ve su historial y total de horas, y exporta su reporte en CSV.
+  asistencia, ve su calendario semanal (qué clases se vienen y cuáles están
+  anuladas), su historial y total de horas, y exporta su reporte en CSV.
 - **Profesor**: ve el listado de todos los alumnos con sus totales de horas e
   historial de asistencias, puede anular y reactivar clases, y puede exportar
   los reportes de horas. No puede modificar asistencias individuales.
+
+## Vista móvil
+
+La app está pensada para usarse desde el celular: la barra superior acorta el
+nombre del colegio, las tarjetas y formularios se apilan en una columna, el
+calendario pasa de tres columnas a una, y las tablas de datos se desplazan
+horizontalmente dentro de su contenedor en lugar de desbordar la página.
 
 ## Stack técnico
 

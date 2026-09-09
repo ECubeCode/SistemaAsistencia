@@ -72,6 +72,9 @@ model Attendance {
 
   @@unique([studentId, date])
   @@index([studentId])
+  // Las consultas por fecha (anular clase, carga manual) filtran solo por
+  // date, que el indice compuesto de arriba no cubre al no ser prefijo.
+  @@index([date])
 }
 
 model AuditLog {

@@ -58,10 +58,13 @@ export function nowInSchoolTZ(now: Date = new Date()) {
   };
 }
 
-function toMinutes(hhmm: string): number {
+/** "21:10" -> 1270 (minutos desde la medianoche). */
+export function toMinutesOfDay(hhmm: string): number {
   const [h, m] = hhmm.split(":").map(Number);
   return h * 60 + m;
 }
+
+const toMinutes = toMinutesOfDay;
 
 /** Info de la clase (si la hay) correspondiente a la fecha dada, sin importar la hora. */
 export function classWindowForDate(date: Date = new Date()) {
@@ -155,4 +158,63 @@ export function isPastOrCurrentClassDate(dateStr: string, now: Date = new Date()
   }
 
   return { ok: true as const, dayOfWeek: win.dayOfWeek, maxHours: hoursForWindow(win) };
+}
+
+// ---------------------------------------------------------------------------
+// Helpers de fechas para la vista de calendario.
+//
+// Se opera siempre sobre strings YYYY-MM-DD parseados como mediodia UTC: asi
+// el dia de la semana y los corrimientos nunca se desplazan por huso horario
+// ni por horario de verano.
+// ---------------------------------------------------------------------------
+
+function parseDateStr(dateStr: string): Date {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+}
+
+function formatDateStr(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+/** Suma (o resta, con n negativo) dias a una fecha YYYY-MM-DD. */
+export function addDays(dateStr: string, n: number): string {
+  const d = parseDateStr(dateStr);
+  d.setUTCDate(d.getUTCDate() + n);
+  return formatDateStr(d);
+}
+
+/** Lunes de la semana a la que pertenece la fecha dada. */
+export function mondayOfWeek(dateStr: string): string {
+  const d = parseDateStr(dateStr);
+  // getUTCDay(): 0=Domingo. Se normaliza para que la semana arranque el lunes.
+  const offset = (d.getUTCDay() + 6) % 7;
+  return addDays(dateStr, -offset);
+}
+
+export type CalendarClass = {
+  date: string;
+  dayOfWeek: string;
+  start: string;
+  end: string;
+  hours: number;
+};
+
+/** Clases que corresponden a la semana que empieza en el lunes dado. */
+export function classesInWeek(mondayStr: string): CalendarClass[] {
+  const classes: CalendarClass[] = [];
+  for (let i = 0; i < 7; i++) {
+    const date = addDays(mondayStr, i);
+    const classDay = classDayForDateStr(date);
+    if (classDay) {
+      classes.push({
+        date,
+        dayOfWeek: classDay.dayOfWeek,
+        start: classDay.start,
+        end: classDay.end,
+        hours: classDay.hours,
+      });
+    }
+  }
+  return classes;
 }

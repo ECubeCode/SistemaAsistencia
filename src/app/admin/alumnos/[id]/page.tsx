@@ -33,14 +33,10 @@ export default function AlumnoDetalleAdmin({ params }: { params: { id: string } 
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [usersData, attData] = await Promise.all([
-      fetch("/api/admin/users").then((r) => r.json()),
-      fetch(`/api/attendance?studentId=${params.id}`).then((r) => r.json()),
-    ]);
-    const found = (usersData.users ?? []).find((u: StudentInfo) => u.id === params.id) ?? null;
-    setStudent(found);
-    setAttendances(attData.attendances ?? []);
-    setTotalHours(attData.totalHours ?? 0);
+    const data = await fetch(`/api/students/${params.id}`).then((r) => r.json());
+    setStudent(data.student ?? null);
+    setAttendances(data.attendances ?? []);
+    setTotalHours(data.totalHours ?? 0);
     setLoading(false);
   }, [params.id]);
 
@@ -186,30 +182,32 @@ export default function AlumnoDetalleAdmin({ params }: { params: { id: string } 
               {attendances.length === 0 ? (
                 <p className="text-sm text-slate-500">Sin asistencias registradas.</p>
               ) : (
-                <table className="table-base">
-                  <thead>
-                    <tr><th>Fecha</th><th>Día</th><th>Horas</th><th>Origen</th><th></th></tr>
-                  </thead>
-                  <tbody>
-                    {attendances.map((a) => (
-                      <tr key={a.id} className={a.cancelled ? "text-slate-400" : undefined}>
-                        <td>{a.date}</td>
-                        <td>{a.dayOfWeek}</td>
-                        <td>
-                          {a.cancelled ? (
-                            <span className="badge bg-amber-100 text-amber-700">Clase anulada</span>
-                          ) : (
-                            `${a.hours}hs`
-                          )}
-                        </td>
-                        <td>{a.source === "ADMIN" ? "Carga manual" : "Autoregistrado"}</td>
-                        <td>
-                          <button className="btn-danger" onClick={() => deleteAttendance(a.date)}>Eliminar</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="table-base">
+                    <thead>
+                      <tr><th>Fecha</th><th>Día</th><th>Horas</th><th>Origen</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                      {attendances.map((a) => (
+                        <tr key={a.id} className={a.cancelled ? "text-slate-400" : undefined}>
+                          <td>{a.date}</td>
+                          <td>{a.dayOfWeek}</td>
+                          <td>
+                            {a.cancelled ? (
+                              <span className="badge bg-amber-100 text-amber-700">Clase anulada</span>
+                            ) : (
+                              `${a.hours}hs`
+                            )}
+                          </td>
+                          <td>{a.source === "ADMIN" ? "Carga manual" : "Autoregistrado"}</td>
+                          <td>
+                            <button className="btn-danger" onClick={() => deleteAttendance(a.date)}>Eliminar</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </section>
           </>

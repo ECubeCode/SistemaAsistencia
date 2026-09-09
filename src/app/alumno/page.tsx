@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import TopBar from "@/components/TopBar";
 import ExportHoursButton from "@/components/ExportHoursButton";
+import WeekCalendar from "@/components/WeekCalendar";
 import type { AttendanceStatus } from "@/lib/schedule";
 
 type Attendance = {
@@ -90,6 +91,11 @@ export default function AlumnoPage() {
             </div>
             <ExportHoursButton label="Exportar mis horas (CSV)" />
           </div>
+        </section>
+
+        <section className="card">
+          <h2 className="mb-4 text-lg font-bold text-primary">Mi semana en Prácticas</h2>
+          <WeekCalendar />
         </section>
 
         <section className="card">
