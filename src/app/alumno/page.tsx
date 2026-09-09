@@ -95,8 +95,8 @@ export default function AlumnoPage() {
             <p className="mb-4 text-sm text-slate-600">
               Antes de que existiera este sistema, es posible que ya hayas cumplido horas de
               Prácticas Profesionalizantes. Indicá cuántas horas ya tenías acumuladas (si no
-              tenías ninguna, dejá 0). Esto se carga una única vez; para corregirlo después vas a
-              tener que pedirlo a la administración.
+              tenías ninguna, dejá 0). Esto se carga una única vez y después no vas a poder
+              modificarlo por tu cuenta, así que revisá bien el número antes de guardar.
             </p>
             <label className="label" htmlFor="initialHours">Horas previas acumuladas</label>
             <input
@@ -160,7 +160,7 @@ export default function AlumnoPage() {
                       <td>{a.date}</td>
                       <td>{a.dayOfWeek}</td>
                       <td>{a.hours}hs</td>
-                      <td>{a.source === "ADMIN" ? "Corregido por admin" : "Autoregistrado"}</td>
+                      <td>{a.source === "ADMIN" ? "Carga manual" : "Autoregistrado"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -201,7 +201,7 @@ function AttendanceCard({
     return (
       <p className="text-slate-600">
         La clase de hoy ({status.start} a {status.end}) ya finalizó y no llegaste a registrar tu
-        asistencia. Consultá con tu profesor o con la administración si necesitás una corrección.
+        asistencia. Consultá con tu profesor/a si necesitás una corrección.
       </p>
     );
   }

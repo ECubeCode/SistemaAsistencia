@@ -2,10 +2,9 @@
 
 Aplicación web de asistencia para la materia **Prácticas Profesionalizantes** del
 E.T. N°3 D.E. 9° "María Sánchez de Thompson". Permite a los alumnos registrar su
-propia asistencia (con conteo automático de horas en módulos de 30 minutos), a
-los profesores consultar el estado de todos los alumnos, y a un administrador
-gestionar usuarios y corregir asistencias pasadas. Incluye un log de auditoría
-de todas las acciones relevantes del sistema.
+propia asistencia (con conteo automático de horas en módulos de 30 minutos) y a
+los profesores consultar el estado de todos los alumnos. Incluye un log de
+auditoría de todas las acciones relevantes del sistema.
 
 ## Horarios y conteo de horas
 
@@ -16,13 +15,12 @@ de todas las acciones relevantes del sistema.
 | Viernes  | 20:40 a 22:10 | 3 | 3hs |
 
 - El botón para registrar asistencia se habilita recién cuando la clase del día
-  ya comenzó, y se deshabilita cuando termina el horario de ese día (después de
-  eso solo el administrador puede cargarla/corregirla, como una clase pasada).
+  ya comenzó, y se deshabilita cuando termina el horario de ese día.
 - Un alumno no puede registrar asistencia de una clase que todavía no sucedió,
   ni ver habilitado el botón fuera del horario de clase.
 - En el primer inicio de sesión, cada alumno puede cargar una única vez la
   cantidad de horas que ya tenía acumuladas antes de que existiera el sistema.
-  Después de esa carga, solo el administrador puede modificarlas.
+- Alumnos y profesores pueden cambiar su propia contraseña una única vez.
 
 ## Roles
 
@@ -30,10 +28,6 @@ de todas las acciones relevantes del sistema.
   asistencia y ve su historial y total de horas.
 - **Profesor**: ve información de solo lectura de todos los alumnos (listado,
   totales de horas, historial de asistencias). No puede modificar nada.
-- **Administrador**: todo lo del profesor, más gestión de usuarios (alta de
-  alumnos/profesores/admins, reseteo de contraseñas, activar/desactivar
-  cuentas), corrección de asistencias de clases ya sucedidas, edición de horas
-  iniciales, y visualización del log de auditoría del sistema.
 
 ## Stack técnico
 
@@ -48,17 +42,10 @@ de todas las acciones relevantes del sistema.
 
 ```bash
 npm install
-cp .env.example .env   # completar DATABASE_URL, NEXTAUTH_SECRET, ADMIN_*
+cp .env.example .env   # completar las variables requeridas
 npx prisma migrate dev
 npm run dev
 ```
-
-La primera vez que se corre `prisma migrate dev` (o al levantar el contenedor
-en producción) se ejecuta automáticamente el seed (`prisma/seed.js`), que crea
-el usuario administrador inicial definido por las variables `ADMIN_DNI` /
-`ADMIN_PASSWORD` / `ADMIN_NOMBRE` / `ADMIN_APELLIDO`, si todavía no existe un
-usuario con ese DNI. **Cambiá esa contraseña (o creá otro admin y desactivá
-este) después del primer ingreso en producción.**
 
 ## Deploy con Dockploy
 
@@ -68,20 +55,17 @@ este) después del primer ingreso en producción.**
 3. Configurá las variables de entorno (ver `.env.example`):
    - `NEXTAUTH_SECRET`: generar con `openssl rand -base64 32`.
    - `NEXTAUTH_URL`: la URL pública final de la app (con https).
-   - `ADMIN_DNI`, `ADMIN_PASSWORD`, `ADMIN_NOMBRE`, `ADMIN_APELLIDO`: datos del
-     administrador inicial.
 4. Asegurate de que el volumen `asistencia_data` (definido en
    `docker-compose.yml`, montado en `/app/data`) sea persistente entre
    despliegues — ahí vive el archivo SQLite con todos los datos.
 5. Desplegá. Al iniciar, el contenedor aplica las migraciones de Prisma
-   (`prisma migrate deploy`) y corre el seed del admin automáticamente antes
-   de levantar el servidor Next.js.
+   (`prisma migrate deploy`) antes de levantar el servidor Next.js.
 
 ## Notas de seguridad
 
-- Las contraseñas se guardan hasheadas con bcrypt, nunca en texto plano.
-- Cambiá `NEXTAUTH_SECRET` y la contraseña del admin inicial antes de dar la
-  app por operativa en producción.
+- Las contraseñas se guardan hasheadas con bcrypt (cost 10), nunca en texto
+  plano: la base solo contiene el hash y el proceso es irreversible.
+- Cambiá `NEXTAUTH_SECRET` antes de dar la app por operativa en producción.
 - Next.js se mantiene en la última versión parcheada de la rama 14.x
   (`14.2.35`) disponible al momento de este desarrollo. Revisá periódicamente
   si hay actualizaciones de seguridad (`npm audit`) y aplicalas.

@@ -6,10 +6,15 @@ import { logAudit } from "@/lib/audit";
 import { Role } from "@/lib/roles";
 
 export async function GET() {
-  const { error } = await requireSession(["ADMIN", "PROFESOR"]);
+  const { session, error } = await requireSession(["ADMIN", "PROFESOR"]);
   if (error) return error;
 
+  // El profesor solo puede ver alumnos: las cuentas administrativas no se
+  // exponen en su respuesta (ni en la UI ni en el tráfico de red).
+  const where = session!.user.role === "PROFESOR" ? { role: "ALUMNO" } : {};
+
   const users = await prisma.user.findMany({
+    where,
     orderBy: [{ role: "asc" }, { apellido: "asc" }, { nombre: "asc" }],
     select: {
       id: true,

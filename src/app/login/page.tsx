@@ -81,7 +81,7 @@ export default function LoginPage() {
         </form>
 
         <p className="mt-6 text-center text-xs text-slate-400">
-          ¿No tenés usuario o olvidaste tu contraseña? Consultá con la administración del sistema.
+          ¿No tenés usuario o olvidaste tu contraseña? Consultá en la escuela.
         </p>
       </div>
     </div>

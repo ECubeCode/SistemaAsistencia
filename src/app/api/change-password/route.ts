@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
   if (user.selfPasswordChangeUsed) {
     return NextResponse.json(
-      { error: "Ya usaste tu única oportunidad de cambiar la contraseña. Consultá con la administración." },
+      { error: "Ya usaste tu única oportunidad de cambiar la contraseña. Consultá en la escuela." },
       { status: 403 }
     );
   }

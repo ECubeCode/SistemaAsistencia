@@ -76,7 +76,7 @@ export default function AlumnoDetalleProfesor({ params }: { params: { id: string
                         <td>{a.date}</td>
                         <td>{a.dayOfWeek}</td>
                         <td>{a.hours}hs</td>
-                        <td>{a.source === "ADMIN" ? "Corregido por admin" : "Autoregistrado"}</td>
+                        <td>{a.source === "ADMIN" ? "Carga manual" : "Autoregistrado"}</td>
                       </tr>
                     ))}
                   </tbody>

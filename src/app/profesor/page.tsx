@@ -29,9 +29,6 @@ export default function ProfesorPage() {
       <main className="mx-auto max-w-5xl space-y-6 px-4 py-8">
         <section className="card">
           <h2 className="mb-4 text-lg font-bold text-primary">Alumnos - Prácticas Profesionalizantes</h2>
-          <p className="mb-4 text-sm text-slate-500">
-            Información de solo lectura. Las correcciones de asistencia las gestiona la administración.
-          </p>
           {loading ? (
             <p className="text-slate-500">Cargando...</p>
           ) : (

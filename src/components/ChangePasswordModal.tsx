@@ -58,7 +58,7 @@ export default function ChangePasswordModal({ onClose }: { onClose: () => void }
             <p className="text-sm font-medium text-green-700">{message?.text}</p>
             <p className="text-sm text-slate-500">
               Este cambio de contraseña solo se puede hacer una vez. Si en el futuro necesitás
-              modificarla de nuevo, vas a tener que pedírselo a la administración.
+              modificarla de nuevo, vas a tener que solicitarlo en la escuela.
             </p>
             <button onClick={onClose} className="btn-primary w-full">
               Cerrar
