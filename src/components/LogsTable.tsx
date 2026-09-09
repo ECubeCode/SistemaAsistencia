@@ -22,6 +22,7 @@ const ACTION_LABELS: Record<string, string> = {
   INITIAL_HOURS_UPDATED_BY_ADMIN: "Horas iniciales editadas por admin",
   USER_CREATED: "Usuario creado",
   USER_UPDATED: "Usuario actualizado",
+  PASSWORD_CHANGED_BY_USER: "Cambio de contraseña propia",
 };
 
 export default function LogsTable() {

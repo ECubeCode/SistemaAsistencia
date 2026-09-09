@@ -12,7 +12,8 @@ export type AuditAction =
   | "USER_CREATED"
   | "USER_UPDATED"
   | "USER_DEACTIVATED"
-  | "USER_REACTIVATED";
+  | "USER_REACTIVATED"
+  | "PASSWORD_CHANGED_BY_USER";
 
 export async function logAudit(params: {
   actorId?: string | null;

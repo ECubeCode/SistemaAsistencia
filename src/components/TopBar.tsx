@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { signOut } from "next-auth/react";
+import ChangePasswordModal from "@/components/ChangePasswordModal";
 
 export default function TopBar({
   nombre,
@@ -12,6 +14,8 @@ export default function TopBar({
   apellido: string;
   roleLabel: string;
 }) {
+  const [showChangePassword, setShowChangePassword] = useState(false);
+
   return (
     <header className="sticky top-0 z-10 border-b border-primary-dark bg-primary text-white shadow">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
@@ -28,6 +32,12 @@ export default function TopBar({
             <p className="text-xs text-accent-light">{roleLabel}</p>
           </div>
           <button
+            onClick={() => setShowChangePassword(true)}
+            className="rounded-lg border border-white/40 px-3 py-1.5 text-sm font-medium transition hover:bg-white/10"
+          >
+            Cambiar contraseña
+          </button>
+          <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="rounded-lg border border-white/40 px-3 py-1.5 text-sm font-medium transition hover:bg-white/10"
           >
@@ -35,6 +45,8 @@ export default function TopBar({
           </button>
         </div>
       </div>
+
+      {showChangePassword && <ChangePasswordModal onClose={() => setShowChangePassword(false)} />}
     </header>
   );
 }
