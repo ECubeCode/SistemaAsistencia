@@ -31,12 +31,15 @@ type Roster = {
 
 type ClassDate = { date: string; dayOfWeek: string };
 
-export default function ClassRoster() {
+export default function ClassRoster({ canEdit = false }: { canEdit?: boolean }) {
   const [dates, setDates] = useState<ClassDate[]>([]);
   const [selected, setSelected] = useState("");
   const [data, setData] = useState<Roster | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"TODOS" | "PRESENTES" | "AUSENTES">("TODOS");
+  // DNI del alumno cuya fila se está guardando, para deshabilitar su botón.
+  const [saving, setSaving] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/classes/dates?limit=20")
@@ -63,6 +66,26 @@ export default function ClassRoster() {
 
   const { lastUpdate, refreshing, refreshNow } = useAutoRefresh(load);
 
+  // Acredita o quita las horas de un alumno en la clase seleccionada.
+  async function toggleAttendance(studentId: string, attended: boolean) {
+    setSaving(studentId);
+    setError(null);
+    const res = await fetch("/api/admin/attendance", {
+      method: attended ? "DELETE" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ studentId, date: selected }),
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setError(d.error ?? "No se pudo guardar el cambio.");
+    }
+    await load();
+    setSaving(null);
+  }
+
+  // Solo tiene sentido editar una clase que ya sucedió y que no esté anulada.
+  const editable = canEdit && !!data && !data.isFuture && !data.cancelled;
+
   const visible = (data?.roster ?? []).filter((r) =>
     filter === "TODOS" ? true : filter === "PRESENTES" ? r.attended : !r.attended
   );
@@ -71,6 +94,7 @@ export default function ClassRoster() {
     <div>
       <p className="mb-3 text-sm text-slate-500">
         Elegí una clase para ver quiénes registraron asistencia y quiénes no.
+        {canEdit && " Podés acreditar o quitar las horas de cada alumno en esa clase."}
       </p>
 
       <div className="mb-4 flex flex-wrap items-end gap-3">
@@ -131,6 +155,8 @@ export default function ClassRoster() {
             )}
           </div>
 
+          {error && <p className="mb-3 text-sm font-medium text-red-600">{error}</p>}
+
           <div className="mb-3 flex flex-wrap gap-2">
             {([
               ["TODOS", `Todos (${data.total})`],
@@ -159,6 +185,7 @@ export default function ClassRoster() {
                   <th>DNI</th>
                   <th>Asistencia</th>
                   <th>Horas</th>
+                  {editable && <th></th>}
                 </tr>
               </thead>
               <tbody>
@@ -180,11 +207,26 @@ export default function ClassRoster() {
                           ? "—"
                           : ""}
                     </td>
+                    {editable && (
+                      <td>
+                        <button
+                          onClick={() => toggleAttendance(r.id, r.attended)}
+                          disabled={saving === r.id}
+                          className={r.attended ? "btn-danger" : "btn-outline !px-3 !py-1 !text-sm"}
+                        >
+                          {saving === r.id
+                            ? "Guardando..."
+                            : r.attended
+                              ? "Quitar"
+                              : "Acreditar"}
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
                 {visible.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="text-center text-slate-500">
+                    <td colSpan={editable ? 5 : 4} className="text-center text-slate-500">
                       No hay alumnos en este filtro.
                     </td>
                   </tr>

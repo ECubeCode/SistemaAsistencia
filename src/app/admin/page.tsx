@@ -72,7 +72,7 @@ export default function AdminPage() {
         {tab === "porClase" && (
           <section className="card">
             <h2 className="mb-4 text-lg font-bold text-primary">Asistencia por clase</h2>
-            <ClassRoster />
+            <ClassRoster canEdit />
           </section>
         )}
 

@@ -76,7 +76,17 @@ Las asistencias se pueden corregir sin límite hacia atrás en el tiempo: se
 puede cargar, editar o borrar la asistencia de cualquier clase que ya haya
 sucedido, sin importar hace cuánto. Lo único que no se admite son clases
 futuras y fechas de clases anuladas (para esas hay que reactivar la clase
-primero).
+primero); en esos casos los botones de edición no aparecen.
+
+Hay dos caminos para hacerlo:
+
+- **Desde la clase** (pestaña *Por clase*): se elige la fecha y cada fila
+  tiene un botón para acreditar o quitar las horas de ese alumno. Es el camino
+  natural cuando falta cargar la asistencia de varios alumnos de una misma
+  clase.
+- **Desde el alumno** (*Alumnos* → *Ver detalle*): permite además elegir una
+  cantidad de horas distinta a la del día completo y borrar filas puntuales
+  del historial.
 
 Cualquier corrección se refleja sola en las pantallas que estén abiertas, sin
 recargar: se revisan los datos cada 30 segundos y al volver a la pestaña. Para
