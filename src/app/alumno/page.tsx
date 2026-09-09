@@ -6,6 +6,7 @@ import TopBar from "@/components/TopBar";
 import ExportHoursButton from "@/components/ExportHoursButton";
 import WeekCalendar from "@/components/WeekCalendar";
 import Celebration from "@/components/Celebration";
+import { useAutoRefresh } from "@/lib/useAutoRefresh";
 import { crossedMilestone, hoursToNextMilestone, milestonesReached } from "@/lib/milestones";
 import type { AttendanceStatus } from "@/lib/schedule";
 
@@ -45,6 +46,10 @@ export default function AlumnoPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Si le corrigen una asistencia, el alumno ve sus horas al día sin recargar.
+  // No dispara festejos: esos son solo para el momento en que él registra.
+  useAutoRefresh(load);
 
   async function handleRegister() {
     setRegistering(true);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useAutoRefresh } from "@/lib/useAutoRefresh";
 
 type CalendarDay = {
   date: string;
@@ -65,7 +66,6 @@ export default function WeekCalendar({ studentId }: { studentId?: string }) {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    setLoading(true);
     const params = new URLSearchParams();
     if (reference) params.set("week", reference);
     if (studentId) params.set("studentId", studentId);
@@ -75,9 +75,16 @@ export default function WeekCalendar({ studentId }: { studentId?: string }) {
     setLoading(false);
   }, [reference, studentId]);
 
+  // El "Cargando..." se muestra solo al abrir o al cambiar de semana; los
+  // refrescos automáticos actualizan en silencio para no hacer parpadear
+  // las tarjetas cada 30 segundos.
   useEffect(() => {
+    setLoading(true);
     load();
   }, [load]);
+
+  // Una corrección de asistencia tiene que verse acá también, sin recargar.
+  useAutoRefresh(load);
 
   function shiftWeek(days: number) {
     if (!week) return;

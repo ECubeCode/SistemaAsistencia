@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import TopBar from "@/components/TopBar";
 import ExportHoursButton from "@/components/ExportHoursButton";
+import RefreshIndicator from "@/components/RefreshIndicator";
+import { useAutoRefresh } from "@/lib/useAutoRefresh";
 
 type Attendance = {
   id: string;
@@ -25,16 +27,19 @@ export default function AlumnoDetalleProfesor({ params }: { params: { id: string
   const [totalHours, setTotalHours] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetch(`/api/students/${params.id}`)
-      .then((r) => r.json())
-      .then((data) => {
-        setStudent(data.student ?? null);
-        setAttendances(data.attendances ?? []);
-        setTotalHours(data.totalHours ?? 0);
-      })
-      .finally(() => setLoading(false));
+  const load = useCallback(async () => {
+    const data = await fetch(`/api/students/${params.id}`).then((r) => r.json());
+    setStudent(data.student ?? null);
+    setAttendances(data.attendances ?? []);
+    setTotalHours(data.totalHours ?? 0);
+    setLoading(false);
   }, [params.id]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const { lastUpdate, refreshing, refreshNow } = useAutoRefresh(load);
 
   if (!session) return null;
 
@@ -68,7 +73,10 @@ export default function AlumnoDetalleProfesor({ params }: { params: { id: string
                     {creditedCount} {creditedCount === 1 ? "asistencia acreditada" : "asistencias acreditadas"}
                   </p>
                 </div>
-                <ExportHoursButton label="Exportar horas (CSV)" studentId={student.id} />
+                <div className="flex flex-col items-end gap-2">
+                  <ExportHoursButton label="Exportar horas (CSV)" studentId={student.id} />
+                  <RefreshIndicator lastUpdate={lastUpdate} refreshing={refreshing} onRefresh={refreshNow} />
+                </div>
               </div>
             </section>
 

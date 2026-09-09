@@ -52,8 +52,8 @@ hagan, un cartel bloquea la app. Ese cambio se puede hacer **una sola vez**,
 así nadie queda con el DNI como clave y después nadie conoce la de los demás.
 
 Si hace falta rehabilitar el cambio (por ejemplo, si alguien tocó la clave de
-otro), la administración restablece la contraseña de ese alumno y el cartel le
-vuelve a aparecer en el siguiente ingreso.
+otro), al restablecer la contraseña de ese alumno el cartel le vuelve a
+aparecer en el siguiente ingreso.
 
 Tras 5 intentos fallidos seguidos, un DNI queda bloqueado 10 minutos. El
 bloqueo se guarda en memoria del proceso, así que un reinicio del contenedor
@@ -69,6 +69,21 @@ mover a la base de datos.
   historial de asistencias, consulta la asistencia de una clase puntual (quién
   vino y quién no, con filtros), puede anular y reactivar clases, y puede
   exportar los reportes de horas. No puede modificar asistencias individuales.
+
+## Correcciones y actualización de las pantallas
+
+Las asistencias se pueden corregir sin límite hacia atrás en el tiempo: se
+puede cargar, editar o borrar la asistencia de cualquier clase que ya haya
+sucedido, sin importar hace cuánto. Lo único que no se admite son clases
+futuras y fechas de clases anuladas (para esas hay que reactivar la clase
+primero).
+
+Cualquier corrección se refleja sola en las pantallas que estén abiertas, sin
+recargar: se revisan los datos cada 30 segundos y al volver a la pestaña. Para
+no gastar batería, no se consulta nada mientras la pestaña está en segundo
+plano. Las pantallas del profesor muestran la hora de la última actualización
+y un botón para forzarla. Las respuestas de la API van con `Cache-Control:
+no-store` para que el navegador nunca sirva una copia vieja.
 
 ## Vista móvil
 

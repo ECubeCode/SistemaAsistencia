@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import RefreshIndicator from "@/components/RefreshIndicator";
+import { useAutoRefresh } from "@/lib/useAutoRefresh";
 
 type RosterEntry = {
   id: string;
@@ -49,15 +51,17 @@ export default function ClassRoster() {
 
   const load = useCallback(async () => {
     if (!selected) return;
-    setLoading(true);
     const d = await fetch(`/api/classes/roster?date=${selected}`).then((r) => r.json());
     setData(d);
     setLoading(false);
   }, [selected]);
 
   useEffect(() => {
+    setLoading(true);
     load();
   }, [load]);
+
+  const { lastUpdate, refreshing, refreshNow } = useAutoRefresh(load);
 
   const visible = (data?.roster ?? []).filter((r) =>
     filter === "TODOS" ? true : filter === "PRESENTES" ? r.attended : !r.attended
@@ -94,6 +98,9 @@ export default function ClassRoster() {
             value={selected}
             onChange={(e) => setSelected(e.target.value)}
           />
+        </div>
+        <div className="pb-2">
+          <RefreshIndicator lastUpdate={lastUpdate} refreshing={refreshing} onRefresh={refreshNow} />
         </div>
       </div>
 

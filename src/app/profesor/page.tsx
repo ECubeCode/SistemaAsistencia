@@ -7,6 +7,8 @@ import StudentsTable, { StudentRow } from "@/components/StudentsTable";
 import CancelledClasses from "@/components/CancelledClasses";
 import ClassRoster from "@/components/ClassRoster";
 import ExportHoursButton from "@/components/ExportHoursButton";
+import RefreshIndicator from "@/components/RefreshIndicator";
+import { useAutoRefresh } from "@/lib/useAutoRefresh";
 
 type Tab = "alumnos" | "porClase" | "clases";
 
@@ -17,7 +19,6 @@ export default function ProfesorPage() {
   const [loading, setLoading] = useState(true);
 
   const loadStudents = useCallback(async () => {
-    setLoading(true);
     const data = await fetch("/api/admin/users").then((r) => r.json());
     setStudents(data.users ?? []);
     setLoading(false);
@@ -26,6 +27,8 @@ export default function ProfesorPage() {
   useEffect(() => {
     loadStudents();
   }, [loadStudents]);
+
+  const { lastUpdate, refreshing, refreshNow } = useAutoRefresh(loadStudents);
 
   if (!session) return null;
 
@@ -59,7 +62,10 @@ export default function ProfesorPage() {
           <section className="card">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-lg font-bold text-primary">Alumnos - Prácticas Profesionalizantes</h2>
-              <ExportHoursButton label="Exportar horas de todos (CSV)" scope="all" />
+              <div className="flex flex-wrap items-center gap-3">
+                <RefreshIndicator lastUpdate={lastUpdate} refreshing={refreshing} onRefresh={refreshNow} />
+                <ExportHoursButton label="Exportar horas de todos (CSV)" scope="all" />
+              </div>
             </div>
             {loading ? (
               <p className="text-slate-500">Cargando...</p>
