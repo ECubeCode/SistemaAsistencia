@@ -43,6 +43,7 @@ export const authOptions: AuthOptions = {
           apellido: user.apellido,
           role: user.role as Role,
           initialHoursSet: user.initialHoursSet,
+          selfPasswordChangeUsed: user.selfPasswordChangeUsed,
         };
       },
     }),
@@ -56,11 +57,15 @@ export const authOptions: AuthOptions = {
         token.apellido = (user as any).apellido;
         token.role = (user as any).role;
         token.initialHoursSet = (user as any).initialHoursSet;
+        token.selfPasswordChangeUsed = (user as any).selfPasswordChangeUsed;
       }
       if (trigger === "update") {
-        // Refresca el flag de horas iniciales tras completarse el alta.
+        // Refresca los flags (horas iniciales / cambio de contraseña) tras completarse la accion.
         const fresh = await prisma.user.findUnique({ where: { id: token.id as string } });
-        if (fresh) token.initialHoursSet = fresh.initialHoursSet;
+        if (fresh) {
+          token.initialHoursSet = fresh.initialHoursSet;
+          token.selfPasswordChangeUsed = fresh.selfPasswordChangeUsed;
+        }
       }
       return token;
     },
@@ -72,6 +77,7 @@ export const authOptions: AuthOptions = {
         (session.user as any).apellido = token.apellido;
         (session.user as any).role = token.role;
         (session.user as any).initialHoursSet = token.initialHoursSet;
+        (session.user as any).selfPasswordChangeUsed = token.selfPasswordChangeUsed;
       }
       return session;
     },

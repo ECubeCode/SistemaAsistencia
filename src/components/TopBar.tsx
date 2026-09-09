@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import ChangePasswordModal from "@/components/ChangePasswordModal";
 
 export default function TopBar({
@@ -14,7 +14,13 @@ export default function TopBar({
   apellido: string;
   roleLabel: string;
 }) {
+  const { data: session } = useSession();
   const [showChangePassword, setShowChangePassword] = useState(false);
+
+  // El admin no tiene cambio de contraseña propio. Alumnos y profesores
+  // solo pueden usarlo una única vez.
+  const canChangePassword =
+    session?.user.role !== "ADMIN" && session?.user.selfPasswordChangeUsed === false;
 
   return (
     <header className="sticky top-0 z-10 border-b border-primary-dark bg-primary text-white shadow">
@@ -31,12 +37,14 @@ export default function TopBar({
             <p className="text-sm font-medium leading-tight">{nombre} {apellido}</p>
             <p className="text-xs text-accent-light">{roleLabel}</p>
           </div>
-          <button
-            onClick={() => setShowChangePassword(true)}
-            className="rounded-lg border border-white/40 px-3 py-1.5 text-sm font-medium transition hover:bg-white/10"
-          >
-            Cambiar contraseña
-          </button>
+          {canChangePassword && (
+            <button
+              onClick={() => setShowChangePassword(true)}
+              className="rounded-lg border border-white/40 px-3 py-1.5 text-sm font-medium transition hover:bg-white/10"
+            >
+              Cambiar contraseña
+            </button>
+          )}
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="rounded-lg border border-white/40 px-3 py-1.5 text-sm font-medium transition hover:bg-white/10"

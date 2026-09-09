@@ -31,11 +31,20 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 
   if (body?.newPassword) {
+    if (target.role !== "ALUMNO") {
+      return NextResponse.json(
+        { error: "El admin no puede restablecer la contraseña de un profesor ni de otro administrador." },
+        { status: 403 }
+      );
+    }
     const newPassword = String(body.newPassword);
     if (newPassword.length < 4) {
       return NextResponse.json({ error: "La contraseña debe tener al menos 4 caracteres." }, { status: 400 });
     }
     data.passwordHash = await bcrypt.hash(newPassword, 10);
+    // Restablecer la contraseña le da al alumno una nueva oportunidad de
+    // personalizarla una vez a través del cambio de contraseña propio.
+    data.selfPasswordChangeUsed = false;
     detailsParts.push("contraseña restablecida");
   }
 

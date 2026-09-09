@@ -21,6 +21,11 @@ model User {
   initialHours        Int      @default(0)
   initialHoursSet     Boolean  @default(false)
 
+  // Alumnos y profesores pueden cambiar su propia contraseña una unica vez.
+  // El admin no tiene esta opcion (ni para si mismo ni para restablecer la
+  // de un profesor: eso queda fuera del alcance de la aplicacion).
+  selfPasswordChangeUsed Boolean @default(false)
+
   active              Boolean  @default(true)
 
   createdAt           DateTime @default(now())

@@ -11,6 +11,7 @@ declare module "next-auth" {
       apellido: string;
       role: Role;
       initialHoursSet: boolean;
+      selfPasswordChangeUsed: boolean;
     };
   }
 
@@ -21,6 +22,7 @@ declare module "next-auth" {
     apellido: string;
     role: Role;
     initialHoursSet: boolean;
+    selfPasswordChangeUsed: boolean;
   }
 }
 
@@ -32,5 +34,6 @@ declare module "next-auth/jwt" {
     apellido: string;
     role: Role;
     initialHoursSet: boolean;
+    selfPasswordChangeUsed: boolean;
   }
 }

@@ -4,9 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/apiAuth";
 import { logAudit } from "@/lib/audit";
 
-// Cualquier usuario autenticado puede cambiar su propia contraseña.
+// Alumnos y profesores pueden cambiar su propia contraseña, pero solo una
+// vez. El admin no tiene esta opción ni siquiera para su propia cuenta.
 export async function POST(req: Request) {
-  const { session, error } = await requireSession();
+  const { session, error } = await requireSession(["ALUMNO", "PROFESOR"]);
   if (error) return error;
 
   const body = await req.json().catch(() => null);
@@ -20,13 +21,23 @@ export async function POST(req: Request) {
   const user = await prisma.user.findUnique({ where: { id: session!.user.id } });
   if (!user) return NextResponse.json({ error: "Usuario no encontrado." }, { status: 404 });
 
+  if (user.selfPasswordChangeUsed) {
+    return NextResponse.json(
+      { error: "Ya usaste tu única oportunidad de cambiar la contraseña. Consultá con la administración." },
+      { status: 403 }
+    );
+  }
+
   const valid = await bcrypt.compare(currentPassword, user.passwordHash);
   if (!valid) {
     return NextResponse.json({ error: "La contraseña actual es incorrecta." }, { status: 400 });
   }
 
   const passwordHash = await bcrypt.hash(newPassword, 10);
-  await prisma.user.update({ where: { id: user.id }, data: { passwordHash } });
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { passwordHash, selfPasswordChangeUsed: true },
+  });
 
   await logAudit({
     actorId: user.id,
