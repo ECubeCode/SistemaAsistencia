@@ -1,19 +1,19 @@
-services:
-  app:
-    build: .
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    environment:
-      DATABASE_URL: "file:/app/data/prod.db"
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
-      NEXTAUTH_URL: ${NEXTAUTH_URL}
-      ADMIN_DNI: ${ADMIN_DNI}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
-      ADMIN_NOMBRE: ${ADMIN_NOMBRE}
-      ADMIN_APELLIDO: ${ADMIN_APELLIDO}
+services:                                                  
+      app:                                                     
+        build: .
+        restart: unless-stopped
+        expose:
+          - "3000"
+        environment:
+          DATABASE_URL: "file:/app/data/prod.db"
+          NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+          NEXTAUTH_URL: ${NEXTAUTH_URL}
+          ADMIN_DNI: ${ADMIN_DNI}
+          ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+          ADMIN_NOMBRE: ${ADMIN_NOMBRE}
+          ADMIN_APELLIDO: ${ADMIN_APELLIDO}
+        volumes:
+          - asistencia_data:/app/data
+  
     volumes:
-      - asistencia_data:/app/data
-
-volumes:
-  asistencia_data:
+      asistencia_data:
